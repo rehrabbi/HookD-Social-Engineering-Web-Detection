@@ -330,21 +330,21 @@ def scan_logic(body, sender=None):
     # C. 419 Scam Detection (High-value + triggers)
     is_419, msg_419 = detect_419_scam(text_norm)
     if is_419:
-        warnings_list.append(f"🎭 {msg_419}")
+        warnings_list.append(f" {msg_419}")
         probability = max(probability, 0.90)
         final_veto = True
 
     # D. BEC Fraud Detection
     is_bec, msg_bec = detect_bec_fraud(text_norm)
     if is_bec and "Legal Disclaimer" not in str(context_flags):
-        warnings_list.append(f"👔 {msg_bec}")
+        warnings_list.append(f" {msg_bec}")
         probability = max(probability, 0.85)
         final_veto = True
 
     # E. Fee Scam Detection
     is_fee, msg_fee = detect_fee_scam(text_norm)
     if is_fee:
-        warnings_list.append(f"💸 {msg_fee}")
+        warnings_list.append(f" {msg_fee}")
         probability = max(probability, 0.88)
         final_veto = True
 

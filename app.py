@@ -200,15 +200,13 @@ def scan_image():
     extracted_text = run_ocr(filepath)
     
     if extracted_text and extracted_text.strip():
-        detected_sender = "Image_OCR"
+        # Get sender from user input instead of auto-detecting from text
+        sender_info = request.form.get('sender_info_image', '').strip()
         
-        email_match = re.search(r'([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', extracted_text, re.IGNORECASE)
-        if email_match:
-            detected_sender = email_match.group(1)
+        if sender_info:
+            detected_sender = sender_info
         else:
-            brand_match = re.search(r'(?:From|Sender|Company):\s*([A-Za-z\s]+)', extracted_text, re.IGNORECASE)
-            if brand_match:
-                detected_sender = brand_match.group(1).strip()
+            detected_sender = "Image_OCR"
 
         try:
             result = scan_logic(body=extracted_text, sender=detected_sender)

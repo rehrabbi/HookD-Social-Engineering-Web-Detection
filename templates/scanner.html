@@ -21,7 +21,6 @@
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
                     <li class="nav-item"><a class="nav-link active" href="{{ url_for('dashboard') }}">Scanner</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('history') }}">History</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
                 </ul>
             </div>
             
@@ -71,9 +70,9 @@
             <li class="nav-item">
                 <button class="nav-link {{ 'active' if mode == 'text' or not mode }}" onclick="switchMode('text')" data-bs-toggle="tab" data-bs-target="#text-pane">Text Scanner</button>
             </li>
-            <li class="nav-item">
+            <!-- <li class="nav-item">
                 <button class="nav-link {{ 'active' if mode == 'url' }}" onclick="switchMode('url')" data-bs-toggle="tab" data-bs-target="#link-pane">Link Scanner</button>
-            </li>
+            </li> -->
             <li class="nav-item">
                 <button class="nav-link {{ 'active' if mode == 'image' }}" onclick="switchMode('image')" data-bs-toggle="tab" data-bs-target="#image-pane">Image Scanner</button>
             </li>
@@ -83,14 +82,41 @@
             <div class="scanner-left-box tab-content" id="scannerTabContent">
                 
                 <div class="tab-pane fade {{ 'show active' if mode == 'text' or not mode }}" id="text-pane" role="tabpanel">
-                    <form action="/scan/text" method="POST" class="h-100 d-flex flex-column">
-                        <textarea name="text_content" class="scanner-field" placeholder="Insert Text Here" required>{{ request.form.text_content if mode == 'text' }}</textarea>
-                        <div class="d-flex justify-content-end align-items-center p-4 gap-4">
-                            <i data-lucide="trash-2" class="icon-action" onclick="document.querySelector('[name=text_content]').value = ''"></i>
-                            <button type="submit" class="btn btn-scan rounded-pill px-5">SCAN</button>
-                        </div>
-                    </form>
+    <form action="/scan/text" method="POST" class="h-100 d-flex flex-column">
+        <textarea name="text_content" class="scanner-field" placeholder="Insert Text Here" required>{{ request.form.text_content if mode == 'text' }}</textarea>
+        
+        <!-- Sender Information Section -->
+        <div class="sender-section p-4 border-top" style="background: rgba(193, 255, 114, 0.05);">
+            <label class="form-label fw-bold mb-3">Sender Information</label>
+            
+            <div class="sender-options mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sender_type" id="sender_email" value="email" checked>
+                    <label class="form-check-label" for="sender_email">Email Address</label>
                 </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sender_type" id="sender_phone" value="phone">
+                    <label class="form-check-label" for="sender_phone">Phone Number/Contact Name</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sender_type" id="sender_none" value="unknown">
+                    <label class="form-check-label" for="sender_none">Unknown/No Sender</label>
+                </div>
+            </div>
+            
+            <input type="text" name="sender_info" id="sender_input" class="form-control" 
+                   placeholder="Enter email address or phone number" 
+                   value="{{ request.form.sender_info if mode == 'text' else '' }}"
+                   style="background: rgba(193, 255, 114, 0.1); border: 1px solid rgba(193, 255, 114, 0.3); color: white;">
+            <small class="d-block mt-2 opacity-75">Optional: Helps identify spoofing and phishing attempts</small>
+        </div>
+        
+        <div class="d-flex justify-content-end align-items-center p-4 gap-4">
+            <i data-lucide="trash-2" class="icon-action" onclick="document.querySelector('[name=text_content]').value = ''"></i>
+            <button type="submit" class="btn btn-scan rounded-pill px-5">SCAN</button>
+        </div>
+    </form>
+</div>
 
                 <div class="tab-pane fade {{ 'show active' if mode == 'url' }}" id="link-pane" role="tabpanel">
                     <form action="/scan/url" method="POST" class="h-100 d-flex flex-column">
@@ -103,20 +129,50 @@
                 </div>
 
                 <div class="tab-pane fade {{ 'show active' if mode == 'image' }}" id="image-pane" role="tabpanel">
-                    <form action="/scan/image" method="POST" enctype="multipart/form-data" class="h-100">
-                        <div class="upload-frame">
-                            <div class="upload-icon-no-border mb-3">
-                                <i data-lucide="image-up"></i>
-                            </div>
-                            <input type="file" name="file_upload" id="fileInput" style="display: none;" accept=".jpg,.png,.jpeg" onchange="this.form.submit()">
-                            <button type="button" class="btn btn-upload rounded-pill px-5 mb-2" onclick="document.getElementById('fileInput').click()">Upload</button>
-                            <p class="small opacity-50">Accepted formats: .jpg, .png</p>
-                            {% if extracted_text and mode == 'image' %}
-                                <p class="small text-success mt-2">Image processed.</p>
-                            {% endif %}
-                        </div>
-                    </form>
+    <form action="/scan/image" method="POST" enctype="multipart/form-data" class="h-100 d-flex flex-column" style="overflow-y: auto;">
+        <div class="upload-frame">
+            <div class="upload-icon-no-border mb-3">
+                <i data-lucide="image-up"></i>
+            </div>
+            <input type="file" name="file_upload" id="fileInput" style="display: none;" accept=".jpg,.png,.jpeg" onchange="handleImageUpload(event)">
+            <button type="button" class="btn btn-upload rounded-pill px-5 mb-2" onclick="document.getElementById('fileInput').click()">Upload</button>
+            <p class="small opacity-50">Accepted formats: .jpg, .png</p>
+            {% if extracted_text and mode == 'image' %}
+                <p class="small text-success mt-2">Image processed.</p>
+            {% endif %}
+        </div>
+
+        <!-- Sender Information Section (Only for Image Scanner) -->
+        <div class="sender-section p-4 border-top" style="background: rgba(193, 255, 114, 0.05);">
+            <label class="form-label fw-bold mb-3">Sender Information</label>
+            
+            <div class="sender-options mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sender_type_image" id="sender_email_image" value="email" checked>
+                    <label class="form-check-label" for="sender_email_image">Email Address</label>
                 </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sender_type_image" id="sender_phone_image" value="phone">
+                    <label class="form-check-label" for="sender_phone_image">Phone Number/Contact Name</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sender_type_image" id="sender_none_image" value="unknown">
+                    <label class="form-check-label" for="sender_none_image">Unknown/No Sender</label>
+                </div>
+            </div>
+            
+            <input type="text" name="sender_info_image" id="sender_input_image" class="form-control" 
+                   placeholder="Enter email address or phone number" 
+                   value="{{ request.form.sender_info_image if mode == 'image' else '' }}"
+                   style="background: rgba(193, 255, 114, 0.1); border: 1px solid rgba(193, 255, 114, 0.3); color: white;">
+            <small class="d-block mt-2 opacity-75">Optional: Specify the actual sender to improve detection accuracy</small>
+        </div>
+        
+        <div class="d-flex justify-content-end align-items-center p-4 gap-4" style="margin-top: auto;">
+            <button type="submit" class="btn btn-scan rounded-pill px-5">SCAN</button>
+        </div>
+    </form>
+</div>
             </div>
             
             <div class="scanner-right-glass d-none d-md-block">
@@ -148,7 +204,9 @@
                             <h6 class="text-uppercase small fw-bold opacity-50 mb-2">Analysis Report</h6>
                             <ul class="list-unstyled small">
                                 {% for detail in result.details %}
-                                    <li class="mb-2"><i data-lucide="arrow-right" style="width:12px; display:inline;"></i> {{ detail }}</li>
+                                    {% if detail != "Developer/Code Context" %}
+                                        <li class="mb-2"><i data-lucide="arrow-right" style="width:12px; display:inline;"></i> {{ detail }}</li>
+                                    {% endif %}
                                 {% endfor %}
                             </ul>
                         </div>
@@ -191,6 +249,74 @@
         function switchMode(mode) {
             console.log("Switching to " + mode);
         }
+
+        // Handle sender type radio button changes
+        document.querySelectorAll('input[name="sender_type"], input[name="sender_type_url"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const inputId = this.closest('form').querySelector('[name="sender_info"]') ? '#sender_input' : '#sender_input_url';
+                const inputField = document.querySelector(inputId);
+                
+                if (this.value === 'email') {
+                    inputField.placeholder = 'Enter email address (e.g., sender@example.com)';
+                } else if (this.value === 'phone') {
+                    inputField.placeholder = 'Enter phone number (e.g., +1234567890)';
+                } else {
+                    inputField.value = '';
+                    inputField.placeholder = 'Leave empty for unknown sender';
+                }
+            });
+        });
+
+        // Handle sender type radio button changes (Image Scanner only)
+        document.querySelectorAll('input[name="sender_type_image"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const inputField = document.querySelector('#sender_input_image');
+                
+                if (this.value === 'email') {
+                    inputField.placeholder = 'Enter email address (e.g., sender@example.com)';
+                    inputField.disabled = false;
+                } else if (this.value === 'phone') {
+                    inputField.placeholder = 'Enter phone number or contact name (e.g., +1234567890 or John Doe)';
+                    inputField.disabled = false;
+                } else {
+                    inputField.value = '';
+                    inputField.placeholder = 'Leave empty for unknown sender';
+                    inputField.disabled = true;
+                }
+            });
+        });
+
+        // Set initial placeholder based on checked radio
+        document.addEventListener('DOMContentLoaded', function() {
+            const radio = document.querySelector('input[name="sender_type_image"]:checked');
+            if (radio && radio.value === 'unknown') {
+                const inputField = document.querySelector('#sender_input_image');
+                inputField.placeholder = 'Leave empty for unknown sender';
+                inputField.disabled = true;
+            }
+        });
+
+        // Handle file upload trigger
+        function handleImageUpload(event) {
+            // File selected, form can now be submitted
+            // User can fill in sender info before final submission
+        }
+
+        // Handle sender type radio button changes (Text Scanner only)
+        document.querySelectorAll('input[name="sender_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const inputField = document.querySelector('#sender_input');
+                
+                if (this.value === 'email') {
+                    inputField.placeholder = 'Enter email address (e.g., sender@example.com)';
+                } else if (this.value === 'phone') {
+                    inputField.placeholder = 'Enter phone number or contact name (e.g., +1234567890 or John Doe)';
+                } else {
+                    inputField.value = '';
+                    inputField.placeholder = 'Leave empty for unknown sender';
+                }
+            });
+        });
     </script>
 </body>
 </html>

@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore", message="X does not have valid feature names")
 try:
     from feature_engine_advanced import PhishFeatureExtractor
 except ImportError:
-    print("⚠️ Warning: feature_engine_advanced.py not found. AI Model might not load.")
+    print(" Warning: feature_engine_advanced.py not found. AI Model might not load.")
 
 # --- ESSENTIAL HELPER FOR AI MODEL LOADING ---
 def get_numeric_features(text_series):
@@ -71,7 +71,7 @@ BEC_TRIGGERS = ["wire transfer", "process a payment", "outstanding payment", "sw
 HYPE_WORDS = [w for w in ["bonus", "limited-time", "offer ends", "hurry", "prize", "winner", "casino"]]
 
 # --- 1. LOAD EXTERNAL ASSETS ---
-print("🔄 SYSTEM: Initializing Resources...")
+print("SYSTEM: Initializing Resources...")
 
 def load_whitelist():
     if os.path.exists(WHITELIST_FILE):
@@ -79,12 +79,12 @@ def load_whitelist():
             with open(WHITELIST_FILE, 'r') as f:
                 data = json.load(f)
                 count = len(data.get('trusted_senders', [])) + len(data.get('trusted_domains', []))
-                print(f"✅ SYSTEM: Whitelist Loaded ({count} entries).")
+                print(f"SYSTEM: Whitelist Loaded ({count} entries).")
                 return data
         except Exception as e:
-            print(f"⚠️ Warning: Could not parse whitelist.json: {e}")
+            print(f"Warning: Could not parse whitelist.json: {e}")
     else:
-        print("ℹ️ Info: No whitelist.json found. Creating a blank one.")
+        print("Info: No whitelist.json found. Creating a blank one.")
         blank = {"trusted_senders": [], "trusted_domains": []}
         try:
             with open(WHITELIST_FILE, 'w') as f:
@@ -153,12 +153,12 @@ def normalize_and_log(text):
         if word in text_nospace and word not in text.lower():
             if word == "signin" and "sign in" in text.lower(): continue
             if word == "login" and "log in" in text.lower(): continue
-            logs.append(f"🛡️ SANITIZATION: Split-Word Obfuscation detected ('{word}')")
+            logs.append(f"SANITIZATION: Split-Word Obfuscation detected ('{word}')")
             break 
 
     if found_obfuscated_risk_words:
         unique_matches = list(set(found_obfuscated_risk_words))
-        logs.append(f"🛡️ SANITIZATION: Obfuscation detected in RISK WORDS: {', '.join(unique_matches)}")
+        logs.append(f"SANITIZATION: Obfuscation detected in RISK WORDS: {', '.join(unique_matches)}")
 
     normalized = text.lower()
     for char, replacement in norm_map.items(): normalized = normalized.replace(char, replacement)
@@ -202,16 +202,16 @@ def check_context(text):
 
     if re.search(dev_keywords_regex, text_lower):
          context_score -= 30
-         flags.append("✅ 💡 CONTEXT: 'Developer/Code' context detected.")
+         flags.append("CONTEXT: 'Developer/Code' context detected.")
 
     if " code " in text_lower and not any(x in text_lower for x in ["qr code", "verification code", "security code"]):
         context_score -= 30
-        flags.append("✅ 💡 CONTEXT: 'Developer/Code' context detected.")
+        flags.append("CONTEXT: 'Developer/Code' context detected.")
 
     legal_keywords = ["confidentiality notice", "privileged", "received in error", "delete this message"]
     if any(k in text.lower() for k in legal_keywords):
         context_score -= 20
-        flags.append("✅ 💡 CONTEXT: 'Legal Disclaimer' detected.")
+        flags.append("CONTEXT: 'Legal Disclaimer' detected.")
     return context_score, list(set(flags))
 
 # --- 5. LAYER 6: ENTROPY ---
@@ -240,7 +240,7 @@ def get_detailed_report(text, sender, probability):
             text_clean_alpha = re.sub(r'[^a-z]', '', text_norm) 
             imperative = any(t in text_norm for t in ["reset", "verify", "confirm", "update"])
             if is_dev_email and "Escapes Decoded" in log and not imperative:
-                warnings.append(f"ℹ️ INFO: {log} (Likely code snippet).")
+                warnings.append(f"INFO: {log} (Likely code snippet).")
             else:
                 warnings.append(log)
                 if probability > 0.60: is_vetoed = True 
@@ -250,14 +250,14 @@ def get_detailed_report(text, sender, probability):
         try:
             sender_domain = sender.split('@')[1]
             if any(sender_domain.endswith(x) for x in ['.xyz', '.top', '.club', '.info', '.br', '.ru']):
-                warnings.append(f"🔺 SENDER: 🚩 Suspicious TLD ('{sender_domain}').")
+                warnings.append(f"SENDER: Suspicious TLD ('{sender_domain}').")
                 is_vetoed = True
             if sum(c.isdigit() for c in sender_domain) > 3:
-                warnings.append(f"🔺 SENDER: 🚩 Domain looks algorithmic.")
+                warnings.append(f"SENDER: Domain looks algorithmic.")
                 is_vetoed = True
             safe_rn = ["corn", "internal", "journal", "modern", "internet"]
             if "rn" in sender_domain and not any(s in sender_domain for s in safe_rn): 
-                warnings.append(f"🔺 ADDRESS: 🚨 HOMOGLYPH SPOOF: Detected 'rn' (fake 'm').")
+                warnings.append(f"ADDRESS: HOMOGLYPH SPOOF: Detected 'rn' (fake 'm').")
                 is_vetoed = True
         except: pass
 
@@ -265,24 +265,24 @@ def get_detailed_report(text, sender, probability):
     has_money = "million" in text_norm or "usd" in text_norm or re.search(r'\$\s?[\d,]{5,}', text)
     
     if has_money and len(found_scam) >= 1:
-        warnings.append(f"🔺 NARRATIVE: 🎭 419 SCAM: High-Value Promise + Triggers.")
+        warnings.append(f"NARRATIVE: 419 SCAM: High-Value Promise + Triggers.")
         is_vetoed = True
         
     if any(t in text_norm for t in BEC_TRIGGERS):
         if "Legal Disclaimer" not in str(context_flags):
-            warnings.append(f"🔺 NARRATIVE: 👔 BEC/CEO FRAUD: Urgent executive request.")
+            warnings.append(f"NARRATIVE: BEC/CEO FRAUD: Urgent executive request.")
             is_vetoed = True
 
     if "processing fee" in text_norm or "customs charge" in text_norm or "customs fee" in text_norm or "unpaid" in text_norm:
-        warnings.append(f"🔺 MONEY: 💸 FEE SCAM: Request for fees/unpaid charges.")
+        warnings.append(f"MONEY: FEE SCAM: Request for fees/unpaid charges.")
         is_vetoed = True
 
     hype = [w for w in HYPE_WORDS if w in text_norm]
     if len(hype) >= 2:
-        warnings.append(f"🔸 SPAM: 📢 Marketing hype detected.")
+        warnings.append(f"SPAM: Marketing hype detected.")
 
     if len(re.findall(r'http.*?\d{1,3}\.\d{1,3}', text_lower)) > 0:
-        warnings.append(f"🔺 LINK: 🚫 DANGEROUS URL: Raw IP address detected.")
+        warnings.append(f"LINK: DANGEROUS URL: Raw IP address detected.")
         is_vetoed = True
 
     return warnings, is_vetoed, "PHISHING", context_flags, context_score
@@ -293,7 +293,7 @@ def full_security_scan(sender, body, mode='1'):
     elif not sender.strip(): sender = "Unknown_Sender"
 
     print("\n" + "="*70)
-    print(f"🔍 ANALYZING: {sender}")
+    print(f"ANALYZING: {sender}")
     print("-" * 70)
 
     # --- LAYER 0: WHITELIST CHECK ---
@@ -309,8 +309,8 @@ def full_security_scan(sender, body, mode='1'):
             is_whitelisted = True
 
         if is_whitelisted:
-            print("🤖 RISK CONFIDENCE: 0%")
-            print(f"✅ VERDICT: SAFE (Whitelisted Sender)")
+            print("RISK CONFIDENCE: 0%")
+            print(f"VERDICT: SAFE (Whitelisted Sender)")
             print("="*70 + "\n")
             return
 
@@ -334,7 +334,7 @@ def full_security_scan(sender, body, mode='1'):
     # FIX: Check for Dangerous Attachment Extensions
     bad_extensions = re.findall(r'\.(exe|scr|vbs|bat|apk|jar|js)\b', body.lower())
     if bad_extensions:
-        warnings_list.append(f"🚨 MALWARE ALERT: Dangerous file extension found (.{bad_extensions[0]}).")
+        warnings_list.append(f"MALWARE ALERT: Dangerous file extension found (.{bad_extensions[0]}).")
         probability = max(probability, 0.95)
 
     if mode == '2' and links:
@@ -346,13 +346,13 @@ def full_security_scan(sender, body, mode='1'):
         
         if not link_safe:
             probability = max(probability, 0.65)
-            warnings_list.append("🚨 SMS RISK: SMS contains a link.")
+            warnings_list.append("SMS RISK: SMS contains a link.")
 
     sender_root, is_impersonating = None, False
     if mode != '3' and (not is_phone_sender or "@" in sender):
         sender_root = get_root_domain(sender)
         if sender_root and "[SUSPICIOUS-SCRIPT]" in sender_root:
-            warnings_list.append(f"🚩 SENDER SPOOF: Non-Standard Characters detected in '{sender}'.")
+            warnings_list.append(f"SENDER SPOOF: Non-Standard Characters detected in '{sender}'.")
             probability = max(probability, 0.95)
             is_impersonating = True
 
@@ -360,13 +360,13 @@ def full_security_scan(sender, body, mode='1'):
         for link in links:
             link_root = get_root_domain(link)
             if link_root and "[SUSPICIOUS-SCRIPT]" in link_root:
-                warnings_list.append(f"🚩 LINK SPOOF: Non-Standard Characters detected in link '{link_root}'.")
+                warnings_list.append(f"LINK SPOOF: Non-Standard Characters detected in link '{link_root}'.")
                 probability = max(probability, 0.95)
                 continue
             
             if link_root and calculate_entropy(link_root) > 3.8:
                 probability = max(probability, 0.75)
-                warnings_list.append(f"🚩 DGA ALERT: Link domain '{link_root}' looks generated.")
+                warnings_list.append(f"DGA ALERT: Link domain '{link_root}' looks generated.")
 
             if sender_root and link_root:
                 # FIX: Cross-Domain Trust (e.g., Gmail -> Google Docs is fine)
@@ -376,7 +376,7 @@ def full_security_scan(sender, body, mode='1'):
                 if "google.com" in sender_root and "google" in link_root: is_related = True
                 
                 if is_related:
-                    safe_indicators.append(f"✅ 🛡️ AUTHORITY: Link matches sender ({link_root}).")
+                    safe_indicators.append(f"AUTHORITY: Link matches sender ({link_root}).")
                     probability -= 0.20
                 else:
                     if "SUSPICIOUS" not in sender_root:
@@ -384,12 +384,12 @@ def full_security_scan(sender, body, mode='1'):
                         link_is_safe = link_root in whitelist.get("trusted_domains", [])
                         if not link_is_safe:
                             probability = max(probability, 0.85)
-                            warnings_list.append(f"🚩 DOMAIN MISMATCH: Sender '{sender_root}' != Link '{link_root}'.")
+                            warnings_list.append(f"DOMAIN MISMATCH: Sender '{sender_root}' != Link '{link_root}'.")
             
             elif is_phone_sender and mode == '2' and link_root:
                 # Check whitelist again for phone links
                 if link_root not in whitelist.get("trusted_domains", []):
-                    warnings_list.append(f"🚩 SMS CONTEXT: Phone sender providing link to '{link_root}'.")
+                    warnings_list.append(f"SMS CONTEXT: Phone sender providing link to '{link_root}'.")
 
     # --- BRAND IMPERSONATION CHECK (Layer 8) ---
     domains_to_check = []
@@ -424,7 +424,7 @@ def full_security_scan(sender, body, mode='1'):
                         is_official = True; break
                 
                 if not is_official:
-                    warnings_list.append(f"🚨 IMPERSONATION: Domain '{domain}' mimics protected brand '{brand}'.")
+                    warnings_list.append(f"IMPERSONATION: Domain '{domain}' mimics protected brand '{brand}'.")
                     probability = max(probability, 0.95)
                     is_impersonating = True
 
@@ -434,7 +434,7 @@ def full_security_scan(sender, body, mode='1'):
         probability += (len(intents) * 0.15)
         # REVERTED: No extra penalty for Job/Task/Prize scams, keeping them at base level
         if "Financial/Payroll" in intents or "Job/Task Scam" in intents: probability += 0.20
-        warnings_list.append(f"🎭 HARVESTING INTENT: {', '.join(intents)} lure detected.")
+        warnings_list.append(f"HARVESTING INTENT: {', '.join(intents)} lure detected.")
 
     f_warnings, f_vetoed, v_type, ctx_flags, ctx_score = get_detailed_report(body, sender, probability)
     
@@ -448,7 +448,7 @@ def full_security_scan(sender, body, mode='1'):
     safety_triggers = ["unsubscribe", "manage preferences", "safely ignore"]
     for phrase in safety_triggers:
         if phrase in body.lower():
-            safe_indicators.append(f"✅ 💡 CONTEXT: Verified 'Safety Valve' found: '{phrase}'.")
+            safe_indicators.append(f"CONTEXT: Verified 'Safety Valve' found: '{phrase}'.")
             if not final_veto: probability -= 0.15
             
     # SAFETY MEASURE: Short Message Sanity Check
@@ -461,25 +461,25 @@ def full_security_scan(sender, body, mode='1'):
     # SANITY CHECK: Short + No Links + No Veto + No Bad Intent + No Money -> SAFE
     if len(body.split()) < 25 and not links and not final_veto and not has_bad_intent and not has_money_trigger and not warnings_list:
          probability = 0.10
-         safe_indicators.append("✅ 💡 CONTEXT: Short, benign conversation detected.")
+         safe_indicators.append("CONTEXT: Short, benign conversation detected.")
 
     is_phishing = (probability >= THRESHOLD) or (final_veto and probability > 0.75)
     risk_score = int(max(0, min(probability * 100, 100)))
     if is_phishing and risk_score < 90: risk_score = 90
     
-    print(f"🤖 RISK CONFIDENCE: {risk_score}%")
+    print(f"RISK CONFIDENCE: {risk_score}%")
     if is_phishing:
-        if final_veto: print("🚫 VETO APPLIED: Forensic Trap confirms risk.")
+        if final_veto: print("VETO APPLIED: Forensic Trap confirms risk.")
         unique_warnings = list(set(warnings_list))
         for w in unique_warnings: print(f"   {w}")
         print("-" * 70)
-        print(f"🚨 FINAL VERDICT: {v_type} DETECTED")
+        print(f"FINAL VERDICT: {v_type} DETECTED")
     elif probability >= 0.60: 
-        print("   ⚠️  ANALYSIS: Signs of Spam or Aggression.")
+        print("ANALYSIS: Signs of Spam or Aggression.")
         unique_warnings = list(set(warnings_list))
         for w in unique_warnings: print(f"   - {w}")
         print("-" * 70)
-        print("⚠️ FINAL VERDICT: PROCEED WITH CAUTION")
+        print("FINAL VERDICT: PROCEED WITH CAUTION")
     else:
         if safe_indicators:
             for s in safe_indicators: print(f"   {s}")
@@ -488,11 +488,11 @@ def full_security_scan(sender, body, mode='1'):
             unique_warnings = list(set(warnings_list))
             for w in unique_warnings: print(f"   {w}")
         print("-" * 70)
-        print("✅ FINAL VERDICT: SAFE MESSAGE")
+        print("FINAL VERDICT: SAFE MESSAGE")
     print("="*70 + "\n")
 
 if __name__ == "__main__":
-    print("\n🛡️  ADVANCED PHISHING & SMS DETECTOR - DIAMOND EDITION")
+    print("\nADVANCED PHISHING & SMS DETECTOR - DIAMOND EDITION")
     while True:
         try:
             print("\n-------------------------")
