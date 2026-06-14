@@ -15,9 +15,9 @@ only get a placeholder file and the app will fail to load the model.
 
 ```bash
 git lfs install            # one-time, from https://git-lfs.com
-git clone <repo-url>
-cd <repo>
-git checkout <branch>
+git clone https://github.com/rehbyte/HookD-Social-Engineering-Web-Detection
+cd HookD-Social-Engineering-Web-Detection
+git checkout offline-exhibit
 git lfs pull               # pulls the real model .pkl
 ```
 
