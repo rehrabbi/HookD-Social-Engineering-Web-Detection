@@ -1,11 +1,20 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, session
 from functools import wraps
 import os
+import sys
 import re
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+
+load_dotenv()  # read .env if present (local dev / exhibit config)
+
+# --- SCANNING BACKEND ---
+# The phishing engine now lives in the "OLD BACKEND" folder. Its folder name
+# contains a space, so we add it to sys.path and import the module directly.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "OLD BACKEND"))
+from phish_scanner import scan_logic
 
 # --- CUSTOM MODULE IMPORTS ---
-from ml_engine.backend_scanner import scan_logic
 from utils.ocr import run_ocr
 from utils.security_filter import check_file_extension
 from utils.email_parser import parse_eml_file, check_header_spoofing, extract_sender_domain
@@ -18,11 +27,18 @@ from database import (
     log_scan, create_user_profile, get_user_profile, update_user_profile,
     verify_user_password, change_user_password,
     get_scan_history, delete_scan_log, clear_scan_history,
+    ensure_guest_user,
 )
 
 app = Flask(__name__)
-# Use an env var if provided; fall back to a dev key for local/demo use.
-app.secret_key = os.environ.get('HOOKD_SECRET_KEY', 'dev-only-change-me')
+# Session key from .env (SECRET_KEY); HOOKD_SECRET_KEY kept as a fallback.
+app.secret_key = os.environ.get('SECRET_KEY') or os.environ.get('HOOKD_SECRET_KEY', 'dev-only-change-me')
+
+# --- DEMO / GUEST MODE ---
+# DEV_MODE=1 skips login and uses a shared local guest account (instant demo).
+# Default OFF: the app uses real local accounts.
+DEV_MODE = os.environ.get('DEV_MODE', '0') != '0'
+DEV_USER = {'id': 'local-guest', 'email': 'guest@localhost', 'name': 'Guest'}
 
 # Max characters accepted for a single scan's content (keeps the DB tidy).
 MAX_SCAN_CHARS = 20000
@@ -31,6 +47,8 @@ MAX_SCAN_CHARS = 20000
 # Creates the SQLite file/tables on first run and seeds a demo account.
 init_db()
 seed_demo_data()
+if DEV_MODE:
+    ensure_guest_user()  # so guest scans can still be logged to history
 
 # --- UPLOAD CONFIG ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -42,6 +60,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        if DEV_MODE and 'user' not in session:
+            session['user'] = DEV_USER  # auto-login guest for instant demo
         if 'user' not in session:
             flash("Please log in first.", "warning")
             return redirect(url_for('login'))
@@ -263,7 +283,13 @@ def scan_image():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
 
-    extracted_text = run_ocr(filepath)
+    try:
+        extracted_text = run_ocr(filepath)
+    except Exception as e:
+        # Most commonly: the Tesseract OCR engine isn't installed. Show a clear
+        # message instead of crashing with a 500 page.
+        flash(f"Image scanning unavailable: {e}", "warning")
+        return redirect(url_for('dashboard'))
 
     # OCR output length is unpredictable -- cap it to keep scans/DB tidy.
     if extracted_text and len(extracted_text) > MAX_SCAN_CHARS:
@@ -290,4 +316,8 @@ def scan_image():
         return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Configurable via .env. host 0.0.0.0 lets other devices on the same
+    # network (e.g. a phone scanning the booth QR) reach the app.
+    debug = os.environ.get('FLASK_DEBUG', '0') == '1'
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=debug)

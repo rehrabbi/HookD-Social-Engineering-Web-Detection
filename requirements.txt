@@ -13,4 +13,10 @@ opencv-python>=4.8
 pytesseract>=0.3.10
 dnspython>=2.4
 
+# Config via .env (SECRET_KEY, DEV_MODE, etc.)
+python-dotenv>=1.0
+
+# Optional: only needed to generate a booth QR code with make_qr.py
+qrcode[pil]>=7.4
+
 # Database is now local SQLite (Python standard library) -- no Supabase needed.

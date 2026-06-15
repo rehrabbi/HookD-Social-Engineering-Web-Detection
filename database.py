@@ -22,8 +22,9 @@ import uuid
 from datetime import datetime, timedelta
 
 # --- DB LOCATION (single local file, no server, no internet) ---
+# Defaults to ./hookd.db, but can be overridden with the DATABASE_PATH env var.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "hookd.db")
+DB_PATH = os.environ.get("DATABASE_PATH") or os.path.join(BASE_DIR, "hookd.db")
 
 # --- PASSWORD HASHING (pure standard library, PBKDF2-HMAC-SHA256) ---
 _PBKDF2_ITERATIONS = 200_000
@@ -162,6 +163,34 @@ def authenticate_user(email, password):
     if row and check_password_hash(row["password_hash"], password):
         return dict(row)
     return None
+
+
+def ensure_guest_user(user_id="local-guest", email="guest@localhost",
+                      display_name="Guest"):
+    """
+    Make sure a fixed guest account exists. Used by DEV_MODE so that scans
+    performed without a real login still satisfy the history foreign key.
+    """
+    try:
+        conn = get_connection()
+        exists = conn.execute(
+            "SELECT id FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        if not exists:
+            conn.execute(
+                """
+                INSERT INTO users
+                    (id, email, password_hash, first_name, last_name,
+                     display_name, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (user_id, email, generate_password_hash(uuid.uuid4().hex),
+                 "Guest", "", display_name, _now_iso()),
+            )
+            conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error ensuring guest user: {e}")
 
 
 # ---------------------------------------------------------------------------

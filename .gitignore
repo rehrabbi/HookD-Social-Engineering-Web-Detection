@@ -1,5 +1,11 @@
+# Environment / secrets (copy .env.example -> .env)
+.env
+
 # Local SQLite database (generated at runtime)
 hookd.db
+
+# Generated booth QR code (make_qr.py)
+hookd_qr.png
 
 # Python
 __pycache__/
