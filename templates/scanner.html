@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HookD | Scanner</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
     <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/scanner-style.css') }}">
@@ -84,11 +85,18 @@
                 <div class="tab-pane fade {{ 'show active' if mode == 'text' or not mode }}" id="text-pane" role="tabpanel">
     <form action="/scan/text" method="POST" class="h-100 d-flex flex-column">
         <textarea name="text_content" class="scanner-field" placeholder="Insert Text Here" required>{{ request.form.text_content if mode == 'text' }}</textarea>
-        
+
+        <!-- Quick example loader (great for demos) -->
+        <div class="example-bar px-4 pb-2">
+            <span class="example-label">Try an example:</span>
+            <button type="button" class="btn-example btn-example-danger" onclick="loadExample('phishing')"><i data-lucide="triangle-alert" style="width:14px;height:14px;"></i> Phishing</button>
+            <button type="button" class="btn-example" onclick="loadExample('safe')"><i data-lucide="check" style="width:14px;height:14px;"></i> Legitimate</button>
+        </div>
+
         <!-- Sender Information Section -->
         <div class="sender-section p-4 border-top" style="background: rgba(193, 255, 114, 0.05);">
             <label class="form-label fw-bold mb-3">Sender Information</label>
-            
+
             <div class="sender-options mb-3">
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="sender_type" id="sender_email" value="email" checked>
@@ -131,11 +139,17 @@
                 <div class="tab-pane fade {{ 'show active' if mode == 'image' }}" id="image-pane" role="tabpanel">
     <form action="/scan/image" method="POST" enctype="multipart/form-data" class="h-100 d-flex flex-column" style="overflow-y: auto;">
         <div class="upload-frame">
-            <div class="upload-icon-no-border mb-3">
-                <i data-lucide="image-up"></i>
+            <div id="uploadPrompt" class="upload-prompt" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon-no-border mb-3">
+                    <i data-lucide="image-up"></i>
+                </div>
+            </div>
+            <div id="previewWrap" class="preview-wrap" style="display: none;" onclick="document.getElementById('fileInput').click()" title="Click to change image">
+                <img id="imagePreview" class="image-preview" alt="Upload preview">
+                <p id="previewName" class="small mt-2 mb-0 text-truncate"></p>
             </div>
             <input type="file" name="file_upload" id="fileInput" style="display: none;" accept=".jpg,.png,.jpeg" onchange="handleImageUpload(event)">
-            <button type="button" class="btn btn-upload rounded-pill px-5 mb-2" onclick="document.getElementById('fileInput').click()">Upload</button>
+            <button type="button" id="uploadBtn" class="btn btn-upload rounded-pill px-5 mb-2" onclick="document.getElementById('fileInput').click()">Upload</button>
             <p class="small opacity-50">Accepted formats: .jpg, .png</p>
             {% if extracted_text and mode == 'image' %}
                 <p class="small text-success mt-2">Image processed.</p>
@@ -184,12 +198,9 @@
                             {% elif result.label == 'Suspicious' %} state-caution 
                             {% else %} state-unsafe {% endif %}">
                             
+                            {% if result.label == 'Safe' %}{% set verdict_icon = 'check' %}{% elif result.label == 'Suspicious' %}{% set verdict_icon = 'triangle-alert' %}{% else %}{% set verdict_icon = 'x' %}{% endif %}
                             <div class="status-icon-circle">
-                                <i data-lucide="
-                                    {% if result.label == 'Safe' %} check 
-                                    {% elif result.label == 'Suspicious' %} alert-triangle 
-                                    {% else %} x {% endif %}">
-                                </i>
+                                <i data-lucide="{{ verdict_icon }}"></i>
                             </div>
                             
                             <h2 class="status-label">{{ result.label|upper }}</h2>
@@ -198,6 +209,10 @@
                             <div class="status-progress-bg">
                                 <div class="status-progress-bar" id="resultBar" data-width="{{ result.confidence | default(0) }}"></div>
                             </div>
+
+                            <button type="button" class="btn-why" onclick="showExplain()">
+                                <i data-lucide="circle-help" style="width:14px;"></i> Why this verdict?
+                            </button>
                         </div>
 
                         <div class="mt-4 w-100 text-start" style="max-height: 200px; overflow-y: auto; color: rgba(255,255,255,0.7);">
@@ -225,6 +240,31 @@
         </div>
 
     </main>
+
+    <!-- AI analysis overlay (shown while a scan is processing) -->
+    <div id="scanOverlay" class="scan-overlay">
+        <div class="scan-overlay-inner">
+            <div class="scan-radar"></div>
+            <h3 class="scan-overlay-title">Analyzing with AI</h3>
+            <p class="scan-overlay-sub" id="scanStage">Initializing model...</p>
+        </div>
+    </div>
+
+    <!-- "Why?" explainability modal -->
+    <div id="explainModal" class="explain-modal">
+        <div class="explain-card">
+            <button type="button" class="explain-close" onclick="hideExplain()">&times;</button>
+            <h4 class="explain-title">Why this verdict?</h4>
+            <p class="explain-intro">The AI highlighted these signals in the message:</p>
+            <div id="explainText" class="explain-text"></div>
+            <div class="explain-legend">
+                <span class="lg lg-url">Suspicious link</span>
+                <span class="lg lg-urg">Urgency / pressure</span>
+                <span class="lg lg-risk">Sensitive request</span>
+            </div>
+            <div id="explainReasons" class="explain-reasons"></div>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/lucide.min.js') }}"></script>
@@ -296,10 +336,21 @@
             }
         });
 
-        // Handle file upload trigger
+        // Handle file upload: show a live thumbnail preview of the chosen image
         function handleImageUpload(event) {
-            // File selected, form can now be submitted
-            // User can fill in sender info before final submission
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('previewName').textContent = file.name;
+                document.getElementById('uploadPrompt').style.display = 'none';
+                document.getElementById('previewWrap').style.display = 'flex';
+                const btn = document.getElementById('uploadBtn');
+                if (btn) btn.textContent = 'Change Image';
+            };
+            reader.readAsDataURL(file);
         }
 
         // Handle sender type radio button changes (Text Scanner only)
@@ -317,6 +368,99 @@
                 }
             });
         });
+
+        // --- Exhibit: one-click sample messages ---
+        const EXAMPLES = {
+            phishing: {
+                text: "Dear Customer,\n\nWe have detected unusual sign-in activity on your account. For your security, your account will be SUSPENDED within 24 hours unless you verify your identity immediately.\n\nVerify now: http://secure-paypa1-login.com/verify-account\n\nFailure to act will result in permanent account closure.\n\nAccount Security Team",
+                sender: "security@paypa1-alerts.com"
+            },
+            safe: {
+                text: "Hi team,\n\nQuick reminder that tomorrow's weekly sync has moved to 3:00 PM. The agenda is in our shared project doc, so please add anything you'd like to discuss.\n\nSee you there!\n\nThanks,\nMaria",
+                sender: "maria@company.com"
+            }
+        };
+
+        function loadExample(type) {
+            const ex = EXAMPLES[type];
+            if (!ex) return;
+            const ta = document.querySelector('[name=text_content]');
+            if (ta) ta.value = ex.text;
+            const emailRadio = document.getElementById('sender_email');
+            if (emailRadio) emailRadio.checked = true;
+            const si = document.getElementById('sender_input');
+            if (si) { si.disabled = false; si.value = ex.sender; }
+        }
+
+        // --- Exhibit: "Analyzing with AI" overlay with cycling pipeline stages ---
+        (function () {
+            const overlay = document.getElementById('scanOverlay');
+            const stageEl = document.getElementById('scanStage');
+            const stages = ["Tokenizing text...", "Extracting features...", "Running NLP model...", "Scoring confidence..."];
+            document.querySelectorAll('form[action^="/scan/"]').forEach(form => {
+                form.addEventListener('submit', function () {
+                    if (!overlay) return;
+                    overlay.classList.add('active');
+                    let i = 0;
+                    if (stageEl) {
+                        stageEl.textContent = stages[0];
+                        setInterval(() => { i = (i + 1) % stages.length; stageEl.textContent = stages[i]; }, 650);
+                    }
+                });
+            });
+        })();
+
+        // --- Exhibit: "Why?" explainability (highlight indicators + list detector signals) ---
+        window.SCANNED_TEXT = {{ (extracted_text if mode == 'image' else request.form.get('text_content','')) | default('', true) | tojson }};
+        window.SCAN_DETAILS = {{ (result.details if result else []) | tojson }};
+        (function () {
+            // Mirrors the indicator categories used by the backend scan engine
+            const URGENCY = ["immediately","urgent","suspended","restricted","locked","blocked","unauthorized","verify now","action required","within 24 hours","24 hours","expire","verify"];
+            const RISK = ["password","account","login","update","confirm","bank","invoice","credential","otp","card number","wire transfer","payment","reset","identity"];
+            const urgencySet = new Set(URGENCY.map(s => s.toLowerCase()));
+            function escReg(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+            function escHtml(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+            const phrases = [...new Set([...URGENCY, ...RISK])].sort((a, b) => b.length - a.length).map(escReg).join('|');
+            const RE = new RegExp('((?:https?:\\/\\/|www\\.)[^\\s<]+)|\\b(' + phrases + ')\\b', 'gi');
+            function highlight(text) {
+                return escHtml(text).replace(RE, (m, url, word) => {
+                    if (url) return '<mark class="hl-url">' + url + '</mark>';
+                    const cls = urgencySet.has(word.toLowerCase()) ? 'hl-urg' : 'hl-risk';
+                    return '<mark class="' + cls + '">' + word + '</mark>';
+                }).replace(/\n/g, '<br>');
+            }
+            window.showExplain = function () {
+                const modal = document.getElementById('explainModal');
+                if (!modal) return;
+                const txt = document.getElementById('explainText');
+                if (txt) txt.innerHTML = (window.SCANNED_TEXT && window.SCANNED_TEXT.trim())
+                    ? highlight(window.SCANNED_TEXT)
+                    : '<span style="opacity:.6">No text content to display.</span>';
+                const reasons = document.getElementById('explainReasons');
+                if (reasons) {
+                    const items = (window.SCAN_DETAILS || []).map(d => '<li>' + escHtml(d) + '</li>').join('');
+                    reasons.innerHTML = items ? '<h6>Detector signals</h6><ul>' + items + '</ul>' : '';
+                }
+                modal.classList.add('active');
+                if (window.lucide) lucide.createIcons();
+            };
+            window.hideExplain = function () {
+                const modal = document.getElementById('explainModal');
+                if (modal) modal.classList.remove('active');
+            };
+        })();
+
+        // --- Exhibit: auto-reset to a clean scanner after 3 min of inactivity ---
+        (function () {
+            let idleTimer;
+            const RESET_MS = 180000;
+            function reset() {
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(() => { window.location.href = "{{ url_for('dashboard') }}"; }, RESET_MS);
+            }
+            ['click', 'keydown', 'mousemove', 'touchstart'].forEach(ev => document.addEventListener(ev, reset, { passive: true }));
+            reset();
+        })();
     </script>
 </body>
 </html>
