@@ -408,7 +408,9 @@ def scan_logic(body, sender=None):
             safe_indicators.append(f"Standard UI Detected: {', '.join(found_intents)}")
         else:
             warnings_list.append(f"Suspicious Context: {', '.join(found_intents)}.")
-            probability += (len(found_intents) * 0.15)
+            # Cap intent stacking so a benign message with several intent words
+            # isn't pushed over the threshold (reduces false positives).
+            probability += min(len(found_intents) * 0.15, 0.30)
 
     # H. Hype/Marketing Detection
     hype_count = sum(1 for word in HYPE_WORDS if word in text_norm)
@@ -416,7 +418,20 @@ def scan_logic(body, sender=None):
         warnings_list.append("Marketing hype detected (spam indicators)")
         probability += 0.05
 
+    # H2. Explicit credential / sensitive-info requests (strong phishing signal).
+    # Catches no-link credential phishing so tightening brand/intent below
+    # doesn't cost recall.
+    CRED_REQUEST = ["card number", "cvv", "atm pin", "reply with your",
+                    "send your password", "share your otp", "send your otp",
+                    "enter your otp", "verify your card"]
+    if any(c in text_norm for c in CRED_REQUEST):
+        warnings_list.append("Sensitive credential request detected.")
+        probability = max(probability, 0.85)
+        final_veto = True
+
     # I. Brand Impersonation (With Brand Alibi)
+    # A brand name alone is benign; only treat it as a risk when corroborated.
+    suspicious_link_present = any(not is_domain_trusted(l, trusted_domains) for l in links) if links else False
     for brand in PROTECTED_BRANDS:
         if brand in text_norm:
             # BRAND ALIBI: If text says "PayPal" and contains "paypal.com", it's fine.
@@ -432,7 +447,7 @@ def scan_logic(body, sender=None):
                 if final_veto or has_urgency:
                      warnings_list.append(f"Brand Warning: '{brand}' detected with risk factors.")
                      probability += 0.20
-            elif brand not in sender.lower():
+            elif brand not in sender.lower() and (has_urgency or final_veto or suspicious_link_present):
                 warnings_list.append(f"Brand Mention: '{brand}' found in non-official channel.")
                 probability += 0.10
 

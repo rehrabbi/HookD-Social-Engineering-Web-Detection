@@ -1,29 +1,29 @@
 {
-  "generated_at": "2026-06-15 15:42",
+  "generated_at": "2026-06-15 16:14",
   "dataset": "ground_truth_200.csv",
   "total": 200,
   "system": {
-    "precision": 72.46,
+    "precision": 78.12,
     "recall": 100.0,
-    "f1": 84.03,
-    "accuracy": 81.0,
+    "f1": 87.72,
+    "accuracy": 86.0,
     "fnr": 0.0,
-    "fpr": 38.0,
-    "specificity": 62.0,
-    "tn": 62,
-    "fp": 38,
+    "fpr": 28.0,
+    "specificity": 72.0,
+    "tn": 72,
+    "fp": 28,
     "fn": 0,
     "tp": 100
   },
   "ocr_accuracy": null,
   "ocr_count": 0,
-  "clarity": 75.5,
+  "clarity": 61.5,
   "baselines": {
     "HookD pipeline": {
-      "precision": 72.5,
+      "precision": 78.1,
       "recall": 100.0,
-      "f1": 84.0,
-      "accuracy": 81.0
+      "f1": 87.7,
+      "accuracy": 86.0
     },
     "Keyword filter": {
       "precision": 85.1,
@@ -40,12 +40,6 @@
   },
   "signals": [
     {
-      "name": "Brand Impersonation",
-      "fired": 89,
-      "correct": 60,
-      "acc": 67
-    },
-    {
       "name": "Intent / Context",
       "fired": 84,
       "correct": 76,
@@ -61,6 +55,12 @@
       "name": "Suspicious TLD",
       "fired": 54,
       "correct": 54,
+      "acc": 100
+    },
+    {
+      "name": "Brand Impersonation",
+      "fired": 53,
+      "correct": 53,
       "acc": 100
     },
     {
