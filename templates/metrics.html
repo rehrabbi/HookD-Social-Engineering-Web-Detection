@@ -6,7 +6,7 @@
     <title>HookD | Model Performance</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/scanner-style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/metrics-style.css') }}">
 </head>
@@ -53,8 +53,8 @@
         </div>
     </nav>
 
-<main class="m-wrap container">
-    <h1 class="m-title">Model Performance</h1>
+<main class="container mt-5 pt-5">
+    <h1 class="display-3 fw-bold mb-2 mt-5">Model Performance</h1>
 
     {% if not results %}
         <div class="m-empty">
