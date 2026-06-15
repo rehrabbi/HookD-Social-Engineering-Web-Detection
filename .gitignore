@@ -18,6 +18,9 @@ hookd.db
 # Generated, IP-specific QR image (regenerate per venue)
 hookd_qr.png
 
+# Batch OCR output may contain text from personal screenshots (PII) — keep local
+ocr_batch_results.csv
+
 # Uploaded scan files (runtime, ephemeral)
 static/uploads/*
 !static/uploads/.gitkeep

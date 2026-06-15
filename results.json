@@ -1,0 +1,91 @@
+{
+  "generated_at": "2026-06-15 15:42",
+  "dataset": "ground_truth_200.csv",
+  "total": 200,
+  "system": {
+    "precision": 72.46,
+    "recall": 100.0,
+    "f1": 84.03,
+    "accuracy": 81.0,
+    "fnr": 0.0,
+    "fpr": 38.0,
+    "specificity": 62.0,
+    "tn": 62,
+    "fp": 38,
+    "fn": 0,
+    "tp": 100
+  },
+  "ocr_accuracy": null,
+  "ocr_count": 0,
+  "clarity": 75.5,
+  "baselines": {
+    "HookD pipeline": {
+      "precision": 72.5,
+      "recall": 100.0,
+      "f1": 84.0,
+      "accuracy": 81.0
+    },
+    "Keyword filter": {
+      "precision": 85.1,
+      "recall": 86.0,
+      "f1": 85.6,
+      "accuracy": 85.5
+    },
+    "Domain/URL filter": {
+      "precision": 100.0,
+      "recall": 59.0,
+      "f1": 74.2,
+      "accuracy": 79.5
+    }
+  },
+  "signals": [
+    {
+      "name": "Brand Impersonation",
+      "fired": 89,
+      "correct": 60,
+      "acc": 67
+    },
+    {
+      "name": "Intent / Context",
+      "fired": 84,
+      "correct": 76,
+      "acc": 90
+    },
+    {
+      "name": "Link/Sender Mismatch",
+      "fired": 59,
+      "correct": 59,
+      "acc": 100
+    },
+    {
+      "name": "Suspicious TLD",
+      "fired": 54,
+      "correct": 54,
+      "acc": 100
+    },
+    {
+      "name": "Suspicious Domain (DGA)",
+      "fired": 13,
+      "correct": 13,
+      "acc": 100
+    },
+    {
+      "name": "Fee Scam",
+      "fired": 7,
+      "correct": 7,
+      "acc": 100
+    },
+    {
+      "name": "BEC / CEO Fraud",
+      "fired": 7,
+      "correct": 7,
+      "acc": 100
+    },
+    {
+      "name": "Advance-Fee (419)",
+      "fired": 6,
+      "correct": 6,
+      "acc": 100
+    }
+  ]
+}

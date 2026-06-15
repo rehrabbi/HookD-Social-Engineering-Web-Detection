@@ -470,7 +470,7 @@ def scan_logic(body, sender=None):
             if "Obfuscation" in log and not ("Developer" in str(context_flags)):
                 probability += 0.10
 
-    risk_score = int(min(probability * 100, 100))
+    risk_score = int(max(0, min(probability * 100, 100)))
     is_phishing = (probability >= 0.75)
     
     if is_phishing:
