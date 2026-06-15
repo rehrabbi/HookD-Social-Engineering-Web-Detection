@@ -24,7 +24,7 @@
     background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08);
     border-radius: 18px; padding: 22px; text-align: center;
 }
-.gauge { width: 130px; height: 130px; }
+.gauge { width: 130px; height: 130px; overflow: visible; }
 .gauge-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 10; }
 .gauge-fill {
     fill: none; stroke: var(--astra-green); stroke-width: 10; stroke-linecap: round;
