@@ -29,7 +29,7 @@ body.history-bg {
 
 /* --- Navigation & Profile --- */
 .navbar-collapse { flex-grow: 0; }
-.logo-icon { width: 20px; height: 20px; background-color: var(--astra-green); border-radius: 4px; }
+.logo-icon { width: 26px; height: 26px; background: url("../img/logo.svg") no-repeat center / contain; }
 
 /* -- Active Link Color -- */
 .navbar-nav .nav-link.active {
