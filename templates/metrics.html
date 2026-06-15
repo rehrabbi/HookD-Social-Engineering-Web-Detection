@@ -63,8 +63,8 @@
         </div>
     {% else %}
     <p class="m-sub">
-        Evaluated on <strong>{{ results.total }}</strong> samples ({{ results.dataset }}) &middot;
-        generated {{ results.generated_at }}
+        Performance was evaluated across a dataset of <strong>{{ results.total }}</strong> labeled samples
+        (<em>{{ results.dataset }}</em>). Report generated on {{ results.generated_at }}.
     </p>
 
     {% macro gauge(label, value) %}
@@ -155,7 +155,9 @@
         </div>
     </section>
 
-    <p class="m-foot">Note: synthetic dataset validates the pipeline. For research, also evaluate on real collected screenshots.</p>
+    <div class="disclaimer-bar mb-5">
+        These results validate the detection pipeline on a synthetic dataset; formal research evaluation should additionally incorporate real, collected screenshot samples.
+    </div>
     {% endif %}
 </main>
 
