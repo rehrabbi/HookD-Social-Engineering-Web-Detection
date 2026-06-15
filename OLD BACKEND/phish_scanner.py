@@ -13,11 +13,23 @@ from urllib.parse import urlparse
 # --- SILENCE WARNINGS ---
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
+# --- PATHS: make this engine usable no matter the current working directory ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+# Allow the status prints below (which contain emoji) to work even on legacy
+# Windows consoles that default to a non-UTF-8 encoding.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 # --- IMPORT FEATURE ENGINE (CRITICAL) ---
 try:
     from feature_engine_advanced import PhishFeatureExtractor
 except ImportError:
-    print("⚠️ Warning: feature_engine_advanced.py not found. AI Model might not load.")
+    print("Warning: feature_engine_advanced.py not found. AI Model might not load.")
 
 # --- ESSENTIAL HELPER FOR AI MODEL LOADING ---
 def get_numeric_features(text_series):
@@ -28,9 +40,9 @@ import __main__
 setattr(__main__, "get_numeric_features", get_numeric_features)
 
 # --- CONFIGURATION ---
-MODEL_FILE = 'Phish_Model_Advanced.pkl'
-WHITELIST_FILE = 'whitelist.json'
-THRESHOLD = 0.90 
+MODEL_FILE = os.path.join(BASE_DIR, 'Phish_Model_Advanced.pkl')
+WHITELIST_FILE = os.path.join(BASE_DIR, 'whitelist.json')
+THRESHOLD = 0.90
 
 # --- PROTECTED BRANDS LIST ---
 PROTECTED_BRANDS = [
@@ -312,7 +324,11 @@ def full_security_scan(sender, body, mode='1'):
             print("🤖 RISK CONFIDENCE: 0%")
             print(f"✅ VERDICT: SAFE (Whitelisted Sender)")
             print("="*70 + "\n")
-            return
+            return {
+                "label": "Safe", "confidence": 0, "css": "success",
+                "message": "Verified Trusted Source",
+                "details": ["Source/Domain matches Whitelist."],
+            }
 
     # --- STANDARD ANALYSIS ---
     warnings_list, safe_indicators = [], []
@@ -490,6 +506,85 @@ def full_security_scan(sender, body, mode='1'):
         print("-" * 70)
         print("✅ FINAL VERDICT: SAFE MESSAGE")
     print("="*70 + "\n")
+
+    # --- STRUCTURED RESULT (for the web app) ---
+    if is_phishing:
+        label, css = "Phishing", "danger"
+    elif probability >= 0.60:
+        label, css = "Suspicious", "warning"
+    else:
+        label, css = "Safe", "success"
+
+    details = list(dict.fromkeys(warnings_list)) + safe_indicators
+    if not details:
+        details = (["No immediate threats detected."] if label == "Safe"
+                   else ["AI Model detected potential risk patterns."])
+
+    return {
+        "label": label,
+        "confidence": risk_score,
+        "css": css,
+        "message": f"Risk Score: {risk_score}%",
+        "details": details,
+    }
+
+
+# Emoji / pictograph ranges used in the console output, stripped from the
+# detail lines shown in the web UI.
+_EMOJI_RE = re.compile(
+    "["
+    "\U0001F000-\U0001FAFF"   # emoji, pictographs, transport & symbols
+    "\U00002600-\U000027BF"   # misc symbols + dingbats (incl. warning, check, x)
+    "\U00002B00-\U00002BFF"   # misc symbols & arrows
+    "ℹ️‍⃣"  # info symbol, variation selector, ZWJ, keycap
+    "]+",
+    flags=re.UNICODE,
+)
+
+
+def _clean_detail(text):
+    """Remove emoji and leading punctuation clutter from one detail line."""
+    if not text:
+        return ""
+    t = _EMOJI_RE.sub("", str(text))
+    t = re.sub(r"\s+", " ", t).strip()
+    t = t.lstrip("-:* ").strip()
+    return t
+
+
+def scan_logic(body, sender=None):
+    """
+    Adapter used by the Flask web app.
+
+    Picks the analysis mode from the sender, runs the OLD BACKEND engine
+    (full_security_scan), and always returns a dict shaped like:
+        {label, confidence, css, message, details}
+    Detail lines are stripped of emoji for clean display in the web UI.
+    """
+    body = body or ""
+    s = "" if sender is None else str(sender).strip()
+
+    if not s or s in ("Unknown", "Unknown_Sender", "Image_OCR"):
+        mode = '3'                                   # text-only / OCR
+    elif re.sub(r'[\s\-+()]', '', s).isdigit():
+        mode = '2'                                   # phone number / SMS
+    else:
+        mode = '1'                                   # email sender
+
+    result = full_security_scan(s, body, mode)
+    if not result:
+        result = {
+            "label": "Safe", "confidence": 0, "css": "success",
+            "message": "Risk Score: 0%",
+            "details": ["No immediate threats detected."],
+        }
+
+    if result.get("details"):
+        cleaned = [_clean_detail(d) for d in result["details"]]
+        result["details"] = [d for d in cleaned if d]
+
+    return result
+
 
 if __name__ == "__main__":
     print("\n🛡️  ADVANCED PHISHING & SMS DETECTOR - DIAMOND EDITION")
