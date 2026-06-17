@@ -28,6 +28,19 @@ presentation. Shared design tokens, fonts, and motion live in
 You can also create your own account from the **Sign Up** page — accounts are
 stored locally with PBKDF2-hashed passwords.
 
+## Get the code (Git LFS required!)
+
+The trained model (`OLD BACKEND/Phish_Model_Advanced.pkl`) is stored with
+**Git LFS**. Install it first, or you'll only get a placeholder file and the
+model won't load.
+
+```bash
+git lfs install            # one-time, from https://git-lfs.com
+git clone https://github.com/rehbyte/HookD-Social-Engineering-Web-Detection
+cd HookD-Social-Engineering-Web-Detection
+git lfs pull               # pulls the real model .pkl
+```
+
 ## Setup
 
 1. (Recommended) create a virtual environment:
@@ -56,14 +69,37 @@ stored locally with PBKDF2-hashed passwords.
 - **Clear history** — wipe all of your scans at once via the "Clear All
   History" button on the History page.
 
-## Optional: production secret key
+## Configuration (optional, via `.env`)
 
-The Flask session key defaults to a development value. To set your own:
+Copy `.env.example` to `.env`. All values have sensible defaults.
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `SECRET_KEY` | Flask session signing key | insecure dev key |
+| `DEV_MODE` | `1` = skip login (instant guest demo); `0` = local accounts | `0` |
+| `FLASK_DEBUG` | `1` = debug mode (local only) | `0` |
+| `PORT` | port the server listens on | `5000` |
+| `DATABASE_PATH` | SQLite file location | `./hookd.db` |
+| `TESSERACT_CMD` | explicit Tesseract path | auto-detect |
+
+## Model performance (Metrics page)
+
+The **Results** page (`/metrics`) shows the model's accuracy, precision, recall,
+F1, confusion matrix, and baseline comparison, read from `results.json`.
+To regenerate it against the current engine:
 
 ```bash
-set HOOKD_SECRET_KEY=your-random-secret   # Windows
-# export HOOKD_SECRET_KEY=your-random-secret  # macOS/Linux
+python test_agent.py ground_truth_200.csv
 ```
+
+## Exhibit / booth mode
+
+- Set `DEV_MODE=1` in `.env` for an instant no-login guest demo.
+- Generate a QR code that links to the running app (e.g. for phones on the same
+  network):
+  ```bash
+  python make_qr.py http://<your-laptop-ip>:5000
+  ```
 
 ## Resetting the data
 

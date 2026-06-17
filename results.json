@@ -1,0 +1,73 @@
+{
+  "generated_at": "2026-06-15 18:08",
+  "dataset": "ground_truth_200.csv",
+  "total": 200,
+  "system": {
+    "precision": 100.0,
+    "recall": 87.0,
+    "f1": 93.05,
+    "accuracy": 93.5,
+    "fnr": 13.0,
+    "fpr": 0.0,
+    "specificity": 100.0,
+    "tn": 100,
+    "fp": 0,
+    "fn": 13,
+    "tp": 87
+  },
+  "ocr_accuracy": 70.8,
+  "ocr_count": 15,
+  "clarity": 82.0,
+  "baselines": {
+    "HookD pipeline": {
+      "precision": 100.0,
+      "recall": 87.0,
+      "f1": 93.0,
+      "accuracy": 93.5
+    },
+    "Keyword filter": {
+      "precision": 85.1,
+      "recall": 86.0,
+      "f1": 85.6,
+      "accuracy": 85.5
+    },
+    "Domain/URL filter": {
+      "precision": 100.0,
+      "recall": 59.0,
+      "f1": 74.2,
+      "accuracy": 79.5
+    }
+  },
+  "signals": [
+    {
+      "name": "Intent / Context",
+      "fired": 84,
+      "correct": 84,
+      "acc": 100
+    },
+    {
+      "name": "Brand Impersonation",
+      "fired": 11,
+      "correct": 11,
+      "acc": 100
+    },
+    {
+      "name": "Fee Scam",
+      "fired": 7,
+      "correct": 7,
+      "acc": 100
+    },
+    {
+      "name": "BEC / CEO Fraud",
+      "fired": 7,
+      "correct": 7,
+      "acc": 100
+    },
+    {
+      "name": "Suspicious Domain (DGA)",
+      "fired": 6,
+      "correct": 6,
+      "acc": 100
+    }
+  ]
+}

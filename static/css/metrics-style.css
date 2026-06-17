@@ -1,0 +1,79 @@
+/* Metrics page chart styles. Navbar + body styling come from scanner-style.css
+   so the top navigation is uniform with the other pages. */
+:root {
+    --good: #2ecc71;
+    --bad: #e74c3c;
+}
+
+/* --- Layout (heading + container come from Bootstrap, same as other pages) --- */
+.m-sub { color: rgba(255,255,255,0.55); margin-bottom: 30px; }
+.m-foot { color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-top: 28px; text-align: center; }
+.m-empty { background: var(--card-bg); border: 1px solid rgba(193,255,114,0.2); border-radius: 16px; padding: 40px; text-align: center; }
+.m-empty code { display: inline-block; margin-top: 10px; color: var(--astra-green); background: rgba(193,255,114,0.08); padding: 8px 14px; border-radius: 8px; }
+
+.card {
+    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px; padding: 26px; margin-bottom: 22px;
+}
+.card-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 20px; color: #fff; }
+.m-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+
+/* --- Gauges --- */
+.gauge-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 22px; }
+.gauge-card {
+    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px; padding: 22px; text-align: center;
+}
+.gauge { width: 130px; height: 130px; overflow: visible; }
+.gauge-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 10; }
+.gauge-fill {
+    fill: none; stroke: var(--astra-green); stroke-width: 10; stroke-linecap: round;
+    filter: drop-shadow(0 0 6px rgba(193,255,114,0.5));
+    transition: stroke-dashoffset 1s ease;
+}
+.gauge-value { fill: #fff; font-size: 1.5rem; font-weight: 800; }
+.gauge-label { margin-top: 8px; color: rgba(255,255,255,0.7); font-weight: 600; }
+
+/* --- Confusion matrix --- */
+.cm-grid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 8px; align-items: stretch; }
+.cm-head { display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 0.8rem; font-weight: 600; text-align: center; padding: 4px; }
+.cm-cell { border-radius: 12px; padding: 18px 10px; text-align: center; }
+.cm-cell span { display: block; font-size: 1.8rem; font-weight: 800; }
+.cm-cell small { color: rgba(255,255,255,0.5); font-size: 0.7rem; }
+.cm-cell.good { background: rgba(46,204,113,0.14); border: 1px solid rgba(46,204,113,0.4); }
+.cm-cell.good span { color: var(--good); }
+.cm-cell.bad { background: rgba(231,76,60,0.14); border: 1px solid rgba(231,76,60,0.4); }
+.cm-cell.bad span { color: var(--bad); }
+
+/* --- Chips --- */
+.chip-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; }
+.chip span { display: block; font-size: 1.5rem; font-weight: 800; color: var(--astra-green); }
+.chip small { color: rgba(255,255,255,0.55); font-size: 0.75rem; }
+
+/* --- Bars (baseline comparison) --- */
+.bar-group { margin-bottom: 20px; }
+.bar-group:last-child { margin-bottom: 0; }
+.bar-name { font-weight: 700; margin-bottom: 8px; color: #fff; }
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.bar-tag { width: 70px; font-size: 0.8rem; color: rgba(255,255,255,0.55); }
+.bar-track { flex: 1; height: 14px; background: rgba(255,255,255,0.06); border-radius: 8px; overflow: hidden; }
+.bar-fill { height: 100%; background: rgba(255,255,255,0.25); border-radius: 8px; }
+.bar-fill.is-primary { background: var(--astra-green); box-shadow: 0 0 10px rgba(193,255,114,0.4); }
+.bar-val { width: 52px; text-align: right; font-size: 0.85rem; font-weight: 600; }
+
+/* --- Signal contribution --- */
+.sig-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.sig-name { width: 180px; font-size: 0.85rem; color: rgba(255,255,255,0.85); }
+.sig-track { flex: 1; height: 18px; background: rgba(255,255,255,0.06); border-radius: 8px; overflow: hidden; }
+.sig-fill { height: 100%; background: linear-gradient(90deg, rgba(193,255,114,0.5), var(--astra-green)); border-radius: 8px; }
+.sig-meta { width: 130px; text-align: right; font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+
+/* --- Responsive (portrait tablet / phone) --- */
+@media (max-width: 760px) {
+    .gauge-row { grid-template-columns: repeat(2, 1fr); }
+    .m-grid-2 { grid-template-columns: 1fr; }
+    .m-nav { padding: 16px 20px; }
+    .m-links { gap: 16px; }
+    .sig-name { width: 120px; }
+}

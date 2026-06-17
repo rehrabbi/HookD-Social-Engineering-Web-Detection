@@ -20,11 +20,16 @@
                 <div class="logo-icon me-2"></div> HookD
             </a>
             
-            <div class="collapse navbar-collapse justify-content-center">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-center" id="mainNav">
                 <ul class="navbar-nav gap-4">
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Scanner</a></li>
                     <li class="nav-item"><a class="nav-link active" href="{{ url_for('history') }}">History</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('metrics') }}">Results</a></li>
                 </ul>
             </div>
             

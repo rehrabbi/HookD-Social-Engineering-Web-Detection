@@ -3,6 +3,7 @@ from functools import wraps
 import os
 import sys
 import re
+import json
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
@@ -217,6 +218,16 @@ def change_password():
 @app.route('/about')
 def about():
     return render_template('about.html', user=session.get('user'))
+
+@app.route('/metrics')
+def metrics():
+    results = None
+    try:
+        with open(os.path.join(BASE_DIR, 'results.json'), encoding='utf-8') as f:
+            results = json.load(f)
+    except Exception:
+        results = None
+    return render_template('metrics.html', user=session.get('user'), results=results)
 
 # --- SCANNING ROUTES ---
 

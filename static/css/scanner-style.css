@@ -290,6 +290,19 @@ mark.hl-risk { background: rgba(193,255,114,0.18); color: var(--astra-green); }
 .status-progress-bg { height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 0 40px; }
 .status-progress-bar { height: 100%; width: 0%; border-radius: 10px; box-shadow: 0 0 10px currentColor; background-color: currentColor; transition: width 1s ease-out; }
 
+/* --- Mobile: stack input + result vertically, show result panel --- */
+@media (max-width: 767px) {
+    .scanner-main-wrap { flex-direction: column; height: auto; border-radius: 0 20px 20px 20px; }
+    .scanner-left-box, .scanner-right-glass { flex: none; width: 100%; }
+    .scanner-right-glass {
+        border-left: none;
+        border-top: 1px solid rgba(193, 255, 114, 0.2);
+        min-height: 340px;
+    }
+    .scanner-field { font-size: 1.2rem; padding: 24px; min-height: 160px; }
+    .scanner-nav-tabs .nav-link { padding: 10px 18px; }
+}
+
 /* --- Backend State Colors --- */
 .state-safe { color: var(--status-safe); }
 .state-caution { color: var(--status-caution); }

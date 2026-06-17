@@ -126,6 +126,25 @@ h1, h2, h3 { text-wrap: balance; }
 *::-webkit-scrollbar-thumb { background: var(--astra-green-30); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
 *::-webkit-scrollbar-thumb:hover { background: rgba(193, 255, 114, 0.5); }
 
+/* ---------- Fixed navbar: solid backdrop on mobile ----------
+   Below the lg breakpoint the navbar collapses to a hamburger and the page
+   scrolls underneath the fixed-top bar. Without a background the brand,
+   toggler and profile dropdown would show the scrolling content through them.
+   Applies to every page with a fixed-top navbar (scanner, history, metrics).
+   The landing page makes its navbar static instead and overrides this. */
+@media (max-width: 991.98px) {
+    .navbar.fixed-top {
+        background: rgba(2, 13, 8, 0.98);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+    .navbar.fixed-top .navbar-collapse {
+        background: rgba(2, 13, 8, 0.98);
+    }
+}
+
 /* ---------- Reduced motion (mandatory a11y) ---------- */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HookD | Model Performance</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+    <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/scanner-style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/metrics-style.css') }}">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top pt-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('index') }}">
+                <div class="logo-icon me-2"></div> HookD
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-center" id="mainNav">
+                <ul class="navbar-nav gap-4">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+                    {% if user %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Scanner</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('history') }}">History</a></li>
+                    {% endif %}
+                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('metrics') }}">Results</a></li>
+                </ul>
+            </div>
+
+            {% if user %}
+            <div class="dropdown">
+                <a href="#" class="profile-trigger dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="profile-pill">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-2"
+                             style="width: 32px; height: 32px; background: #000; border: 1px solid #c1ff72; color: #c1ff72; font-weight: 700; font-size: 0.9rem;">
+                            {{ user.name[0] | upper if user and user.name else 'U' }}
+                        </div>
+                        <span class="profile-name">{{ user.name if user else 'User' }}</span>
+                        <i data-lucide="chevron-down" style="width: 16px; margin-left: 8px; opacity: 0.5;"></i>
+                    </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('profile') }}"><i data-lucide="user" style="width: 16px;"></i> My Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="{{ url_for('logout') }}"><i data-lucide="log-out" style="width: 16px;"></i> Logout</a></li>
+                </ul>
+            </div>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-scan rounded-pill px-4">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+<main class="container mt-5 pt-5">
+    <h1 class="display-3 fw-bold mb-2 mt-5">Model Performance</h1>
+
+    {% if not results %}
+        <div class="m-empty">
+            <p>No results yet. Generate them by running:</p>
+            <code>python test_agent.py ground_truth_200.csv</code>
+        </div>
+    {% else %}
+    <p class="m-sub">
+        Performance was evaluated across a dataset of <strong>{{ results.total }}</strong> labeled samples
+        (<em>{{ results.dataset }}</em>). Report generated on {{ results.generated_at }}.
+    </p>
+
+    {% macro gauge(label, value) %}
+    <div class="gauge-card">
+        <svg viewBox="0 0 120 120" class="gauge">
+            <circle cx="60" cy="60" r="52" class="gauge-track"/>
+            <circle cx="60" cy="60" r="52" class="gauge-fill"
+                    stroke-dasharray="326.726"
+                    stroke-dashoffset="{{ (326.726 * (1 - value/100)) | round(2) }}"
+                    transform="rotate(-90 60 60)"/>
+            <text x="60" y="66" text-anchor="middle" class="gauge-value">{{ value | round(1) }}%</text>
+        </svg>
+        <div class="gauge-label">{{ label }}</div>
+    </div>
+    {% endmacro %}
+
+    <!-- Headline gauges -->
+    <section class="gauge-row">
+        {{ gauge('Accuracy', results.system.accuracy) }}
+        {{ gauge('Precision', results.system.precision) }}
+        {{ gauge('Recall', results.system.recall) }}
+        {{ gauge('F1 Score', results.system.f1) }}
+    </section>
+
+    <div class="m-grid-2">
+        <!-- Confusion matrix -->
+        <section class="card">
+            <h2 class="card-title">Confusion Matrix</h2>
+            <div class="cm-grid">
+                <div></div>
+                <div class="cm-head">Pred. Legit</div>
+                <div class="cm-head">Pred. Phishing</div>
+                <div class="cm-head">Actual Legit</div>
+                <div class="cm-cell good"><span>{{ results.system.tn }}</span><small>True Negative</small></div>
+                <div class="cm-cell bad"><span>{{ results.system.fp }}</span><small>False Positive</small></div>
+                <div class="cm-head">Actual Phishing</div>
+                <div class="cm-cell bad"><span>{{ results.system.fn }}</span><small>False Negative</small></div>
+                <div class="cm-cell good"><span>{{ results.system.tp }}</span><small>True Positive</small></div>
+            </div>
+        </section>
+
+        <!-- Secondary metrics -->
+        <section class="card">
+            <h2 class="card-title">Detailed Metrics</h2>
+            <div class="chip-grid">
+                <div class="chip"><span>{{ results.system.fnr | round(1) }}%</span><small>False Negative Rate</small></div>
+                <div class="chip"><span>{{ results.system.fpr | round(1) }}%</span><small>False Positive Rate</small></div>
+                <div class="chip"><span>{{ results.system.specificity | round(1) }}%</span><small>Specificity</small></div>
+                <div class="chip"><span>{{ results.clarity }}%</span><small>Verdict Clarity</small></div>
+                <div class="chip"><span>{% if results.ocr_accuracy is not none %}{{ results.ocr_accuracy }}%{% else %}N/A{% endif %}</span><small>OCR Accuracy{% if results.ocr_count %} ({{ results.ocr_count }} img){% endif %}</small></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Baseline comparison -->
+    <section class="card">
+        <h2 class="card-title">Pipeline vs Simple Filters</h2>
+        <div class="bars">
+            {% for name, b in results.baselines.items() %}
+            <div class="bar-group">
+                <div class="bar-name">{{ name }}</div>
+                {% for metric, val in [('Precision', b.precision), ('Recall', b.recall), ('F1', b.f1)] %}
+                <div class="bar-row">
+                    <span class="bar-tag">{{ metric }}</span>
+                    <div class="bar-track"><div class="bar-fill {{ 'is-primary' if name == 'HookD pipeline' }}" style="width: {{ val }}%;"></div></div>
+                    <span class="bar-val">{{ val }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Signal contribution -->
+    <section class="card">
+        <h2 class="card-title">Which Signals Drive Correct Verdicts</h2>
+        {% set maxfired = results.signals | map(attribute='fired') | max %}
+        <div class="sig-list">
+            {% for s in results.signals %}
+            <div class="sig-row">
+                <span class="sig-name">{{ s.name }}</span>
+                <div class="sig-track">
+                    <div class="sig-fill" style="width: {{ (s.fired / maxfired * 100) | round(1) }}%;"></div>
+                </div>
+                <span class="sig-meta">{{ s.fired }}&times; &middot; {{ s.acc }}% correct</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="disclaimer-bar mb-5">
+        These results validate the detection pipeline on a synthetic dataset; formal research evaluation should additionally incorporate real, collected screenshot samples.
+    </div>
+    {% endif %}
+</main>
+
+    <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/lucide.min.js') }}"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -19,4 +19,7 @@ python-dotenv>=1.0
 # Optional: only needed to generate a booth QR code with make_qr.py
 qrcode[pil]>=7.4
 
+# Optional: only needed to run the evaluation suite (test_agent.py)
+Levenshtein>=0.21
+
 # Database is now local SQLite (Python standard library) -- no Supabase needed.
