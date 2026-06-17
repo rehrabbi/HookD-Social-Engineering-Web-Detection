@@ -166,3 +166,24 @@ body {
     color: white;
 }
 .btn-logout:active { transform: scale(0.98); }
+
+/* --- Mobile responsiveness --- */
+/* Bootstrap's navbar-expand-lg stacks .navbar-nav vertically below 992px.
+   These are just three short links, so keep them in a centered row instead
+   of letting them pile up and push the profile card down the screen. */
+@media (max-width: 991.98px) {
+    .navbar .navbar-nav {
+        flex-direction: row;
+        justify-content: center;
+        gap: 1.25rem !important;
+    }
+
+    .profile-card {
+        margin-top: 60px;
+        padding: 70px 22px 32px;
+    }
+
+    .profile-heading {
+        font-size: 2rem;
+    }
+}
